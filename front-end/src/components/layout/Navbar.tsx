@@ -20,12 +20,12 @@ const Navbar = () => {
                 </Link></>:
                 <>
                 <Link 
-                to="/auth/sing-in"
+                to="/auth/sign-in"
                 >
                     <Button variant="ghost" size="sm">Sign In</Button>
                 </Link>
                 <Link 
-                to="/auth/sing-up"
+                to="/auth/sign-up"
                 >
                     <Button size="sm">Sign Up</Button>
                 </Link>
