@@ -1,9 +1,12 @@
-import React from 'react'
+import { useParams } from "react-router-dom";
+import { AuthView } from "@daveyplate/better-auth-ui";
 
-const Auth = () => {
+export default function Auth() {
+  const { pathname } = useParams();
+
   return (
-    <div>Auth</div>
-  )
+    <main className="min-h-screen flex items-center justify-center p-4">
+      <AuthView pathname={pathname} />
+    </main>
+  );
 }
-
-export default Auth

@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import Onboarding from './pages/Onboarding';
 import Profile from './pages/Profile';
 import Navbar from './components/layout/Navbar';
+import { Providers } from './app/providers';
 
 function App() {
   
@@ -15,6 +16,7 @@ function App() {
   return (
     <>
       <BrowserRouter>
+      <Providers>
       <div className='min-h-screen flex flex-col'>
         <main className='flex-1'>
           <Navbar />
@@ -27,6 +29,7 @@ function App() {
         </Routes>
         </main>
         </div>
+        </Providers>
       </BrowserRouter>
     </>
   )
