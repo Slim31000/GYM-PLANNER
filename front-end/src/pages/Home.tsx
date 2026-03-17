@@ -1,9 +1,18 @@
-import React from 'react'
+import { Navigate } from "react-router-dom";
+import { authClient } from "@/lib/auth";
 
 const Home = () => {
-  return (
-    <div>Home</div>
-  )
-}
+  const { data: session, isPending } = authClient.useSession();
 
-export default Home
+  if (isPending) {
+    return <div>Loading...</div>;
+  }
+
+  if (session?.user) {
+    return <Navigate to="/profile" replace />;
+  }
+
+  return <div>Home</div>;
+};
+
+export default Home;
