@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 import {Dumbbell} from 'lucide-react'
 import { Button } from '../ui/button'
-import { authClient } from '../../lib/auth.ts'
-import { UserAvatar } from "@daveyplate/better-auth-ui";
+import { authClient } from '@/lib/auth.ts'
+import {  UserButton } from "@daveyplate/better-auth-ui";
 
 
 const Navbar = () => {
@@ -27,16 +27,8 @@ const Navbar = () => {
                 >
                     <Button variant="ghost" size="sm">My Plan</Button>
                 </Link>
-                <UserAvatar
-                user={{
-                    name:session.user.name || "",
-                    email:session.user.email || "",
-                    image:session.user.image || "",
-                }}
-                className="size-9 border border-border"
-                classNames={{
-                  fallback: "bg-black text-white text-sm",
-                }}/>
+                <UserButton size='lg'/>
+                
                 </>:
                 <>
                 <Link 
