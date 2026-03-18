@@ -86,7 +86,13 @@ const Onboarding = () => {
     injuries: formData.injuries || undefined,
     preferredSplit: formData.preferredSplit as OnboardingFormData["preferredSplit"],
   };
-    saveProfile(profile);
+    try {
+      await saveProfile(profile);
+      
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+      
+    }
   };
 
   if (!user) {
