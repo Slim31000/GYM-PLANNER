@@ -8,7 +8,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { authClient } from "@/lib/auth";
+import { useAuth } from "@/context/AppContext";
+import { OnboardingFormData } from "@/types";
 import { RedirectToSignIn, SignedIn } from "@daveyplate/better-auth-ui";
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
@@ -56,7 +57,7 @@ const splitOptions = [
 ];
 
 const Onboarding = () => {
-  const { data: session } = authClient.useSession();
+  const { user ,saveProfile} = useAuth();
 
   const [formData, setFormData] = useState({
     goal: "bulk",
@@ -76,9 +77,25 @@ const Onboarding = () => {
   const handleQuestionnaire = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("formData submit ->", formData);
+    const profile: OnboardingFormData = {
+    goal: formData.goal as OnboardingFormData["goal"],
+    experience: formData.experience as OnboardingFormData["experience"],
+    daysPerWeek: parseInt(formData.daysPerWeek, 10),
+    sessionLength: parseInt(formData.sessionLength, 10),
+    equipment: formData.equipment as OnboardingFormData["equipment"],
+    injuries: formData.injuries || undefined,
+    preferredSplit: formData.preferredSplit as OnboardingFormData["preferredSplit"],
+  };
+    try {
+      await saveProfile(profile);
+      
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+      
+    }
   };
 
-  if (!session?.user) {
+  if (!user) {
     return <RedirectToSignIn />;
   }
 

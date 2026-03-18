@@ -1,5 +1,5 @@
 import { AuthUIProvider } from "@daveyplate/better-auth-ui";
-import { authClient } from "../lib/auth";
+import { authClient } from "@/lib/auth";
 import { useNavigate, Link as ReactRouterLink } from "react-router-dom";
 import type { ReactNode } from "react";
 
