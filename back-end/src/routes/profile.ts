@@ -29,7 +29,7 @@ profileRouter.post("/", async (req: Request, res: Response) => {
     if(!goal || !experience || !daysPerWeek || !sessionLength || !equipment || !preferredSplit) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    await db
+    const [savedProfile] = await db
   .insert(userProfiles)
   .values({
     userId,
@@ -55,7 +55,7 @@ profileRouter.post("/", async (req: Request, res: Response) => {
     },
   })
   .returning();
-  res.json({success: true});
+  res.status(200).json({success: true,profile:savedProfile});
   } catch (error) {
     console.error("Error saving profile:", error);
     res
