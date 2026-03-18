@@ -25,7 +25,7 @@ app.use(express.json());
 
 // API Routes
 
-app.use("/api/profile", (profileRouter));
+app.use("/api/profile", profileRouter);
 app.use("/api/plan",planRouter);
 
 app.listen(port, () => {

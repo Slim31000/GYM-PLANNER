@@ -1,14 +1,14 @@
 import { Navigate } from "react-router-dom";
-import { authClient } from "@/lib/auth";
+import { useAuth } from "@/context/AppContext";
 
 const Home = () => {
-  const { data: session, isPending } = authClient.useSession();
+  const { user, isLoading } = useAuth();
 
-  if (isPending) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  if (session?.user) {
+  if (user) {
     return <Navigate to="/profile" replace />;
   }
 
