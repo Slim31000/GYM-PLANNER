@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardTitle,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -11,8 +17,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AppContext";
 import { OnboardingFormData } from "@/types";
 import { RedirectToSignIn, SignedIn } from "@daveyplate/better-auth-ui";
-import { ArrowRight } from "lucide-react";
+
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const goalOptions = [
   { value: "bulk", label: "Prise de masse" },
@@ -57,7 +65,8 @@ const splitOptions = [
 ];
 
 const Onboarding = () => {
-  const { user ,saveProfile} = useAuth();
+  const { user, saveProfile, generatePlan } = useAuth();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     goal: "bulk",
@@ -69,29 +78,38 @@ const Onboarding = () => {
     preferredSplit: "upper_lower",
   });
 
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const updateForm = (field: string, value: string) => {
     console.log("updateForm ->", field, value);
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleQuestionnaire = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleQuestionnaire = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("formData submit ->", formData);
     const profile: OnboardingFormData = {
-    goal: formData.goal as OnboardingFormData["goal"],
-    experience: formData.experience as OnboardingFormData["experience"],
-    daysPerWeek: parseInt(formData.daysPerWeek, 10),
-    sessionLength: parseInt(formData.sessionLength, 10),
-    equipment: formData.equipment as OnboardingFormData["equipment"],
-    injuries: formData.injuries || undefined,
-    preferredSplit: formData.preferredSplit as OnboardingFormData["preferredSplit"],
-  };
+      goal: formData.goal as OnboardingFormData["goal"],
+      experience: formData.experience as OnboardingFormData["experience"],
+      daysPerWeek: parseInt(formData.daysPerWeek, 10),
+      sessionLength: parseInt(formData.sessionLength, 10),
+      equipment: formData.equipment as OnboardingFormData["equipment"],
+      injuries: formData.injuries || undefined,
+      preferredSplit:
+        formData.preferredSplit as OnboardingFormData["preferredSplit"],
+    };
     try {
       await saveProfile(profile);
-      
+      setIsGenerating(true);
+      await generatePlan();
+      navigate("/profile");
     } catch (error) {
-      console.error("Failed to save profile:", error);
-      
+      setError(
+        error instanceof Error ? error.message : "Failed to save profile"
+      );
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -103,165 +121,208 @@ const Onboarding = () => {
     <SignedIn>
       <div className="min-h-screen pt-24 pb-12 px-6">
         <div className="max-w-xl mx-auto">
-          <Card className="border border-border px-8 py-8">
-            <h1 className="text-2xl font-bold mb-2">Parlez-nous de vous</h1>
+          {!isGenerating ? (
+            <Card className="border border-border px-8 py-8">
+              <CardHeader className="px-0 pt-0">
+                <CardTitle className="text-2xl font-bold">
+                  Parlez-nous de vous
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Aidez-nous à créer le programme parfait pour vous.
+                </CardDescription>
+              </CardHeader>
 
-            <p className="text-muted-foreground mb-8">
-              Aidez-nous à créer le programme parfait pour vous.
-            </p>
+              <CardContent className="px-0 pb-0">
+                <form onSubmit={handleQuestionnaire} className="space-y-6">
+                  <div className="space-y-3">
+                    <label htmlFor="goal" className="text-sm font-medium block">
+                      Quel est votre objectif principal ?
+                    </label>
+                    <Select
+                      value={formData.goal}
+                      onValueChange={(value) => updateForm("goal", value)}
+                    >
+                      <SelectTrigger id="goal">
+                        <SelectValue placeholder="Choisissez votre objectif" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {goalOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <form onSubmit={handleQuestionnaire} className="space-y-6">
-              <div className="space-y-3">
-                <label htmlFor="goal" className="text-sm font-medium block">
-                  Quel est votre objectif principal ?
-                </label>
-                <Select
-                  value={formData.goal}
-                  onValueChange={(value) => updateForm("goal", value)}
-                >
-                  <SelectTrigger id="goal">
-                    <SelectValue placeholder="Choisissez votre objectif" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {goalOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div className="space-y-3">
+                    <label
+                      htmlFor="experience"
+                      className="text-sm font-medium block"
+                    >
+                      Niveau d’expérience en entraînement
+                    </label>
+                    <Select
+                      value={formData.experience}
+                      onValueChange={(value) => updateForm("experience", value)}
+                    >
+                      <SelectTrigger id="experience">
+                        <SelectValue placeholder="Choisissez votre niveau" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {experienceOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-3">
-                <label htmlFor="experience" className="text-sm font-medium block">
-                  Niveau d’expérience en entraînement
-                </label>
-                <Select
-                  value={formData.experience}
-                  onValueChange={(value) => updateForm("experience", value)}
-                >
-                  <SelectTrigger id="experience">
-                    <SelectValue placeholder="Choisissez votre niveau" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {experienceOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div className="grid grid-cols-2 gap-5">
+                    <div className="space-y-3">
+                      <label
+                        htmlFor="daysPerWeek"
+                        className="text-sm font-medium block"
+                      >
+                        Jours par semaine
+                      </label>
+                      <Select
+                        value={formData.daysPerWeek}
+                        onValueChange={(value) =>
+                          updateForm("daysPerWeek", value)
+                        }
+                      >
+                        <SelectTrigger id="daysPerWeek">
+                          <SelectValue placeholder="Choisir" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {daysOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-              <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-3">
-                  <label htmlFor="daysPerWeek" className="text-sm font-medium block">
-                    Jours par semaine
-                  </label>
-                  <Select
-                    value={formData.daysPerWeek}
-                    onValueChange={(value) => updateForm("daysPerWeek", value)}
-                  >
-                    <SelectTrigger id="daysPerWeek">
-                      <SelectValue placeholder="Choisir" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {daysOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="space-y-3">
+                      <label
+                        htmlFor="sessionLength"
+                        className="text-sm font-medium block"
+                      >
+                        Durée de la séance
+                      </label>
+                      <Select
+                        value={formData.sessionLength}
+                        onValueChange={(value) =>
+                          updateForm("sessionLength", value)
+                        }
+                      >
+                        <SelectTrigger id="sessionLength">
+                          <SelectValue placeholder="Choisir" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sessionOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-                <div className="space-y-3">
-                  <label htmlFor="sessionLength" className="text-sm font-medium block">
-                    Durée de la séance
-                  </label>
-                  <Select
-                    value={formData.sessionLength}
-                    onValueChange={(value) => updateForm("sessionLength", value)}
-                  >
-                    <SelectTrigger id="sessionLength">
-                      <SelectValue placeholder="Choisir" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sessionOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                  <div className="space-y-3">
+                    <label
+                      htmlFor="equipment"
+                      className="text-sm font-medium block"
+                    >
+                      Équipement disponible
+                    </label>
+                    <Select
+                      value={formData.equipment}
+                      onValueChange={(value) => updateForm("equipment", value)}
+                    >
+                      <SelectTrigger id="equipment">
+                        <SelectValue placeholder="Choisissez votre équipement" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {equipmentOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-3">
-                <label htmlFor="equipment" className="text-sm font-medium block">
-                  Équipement disponible
-                </label>
-                <Select
-                  value={formData.equipment}
-                  onValueChange={(value) => updateForm("equipment", value)}
-                >
-                  <SelectTrigger id="equipment">
-                    <SelectValue placeholder="Choisissez votre équipement" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {equipmentOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div className="space-y-3">
+                    <label
+                      htmlFor="preferredSplit"
+                      className="text-sm font-medium block"
+                    >
+                      Répartition d’entraînement préférée
+                    </label>
+                    <Select
+                      value={formData.preferredSplit}
+                      onValueChange={(value) =>
+                        updateForm("preferredSplit", value)
+                      }
+                    >
+                      <SelectTrigger id="preferredSplit">
+                        <SelectValue placeholder="Choisissez un format" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {splitOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-3">
-                <label htmlFor="preferredSplit" className="text-sm font-medium block">
-                  Répartition d’entraînement préférée
-                </label>
-                <Select
-                  value={formData.preferredSplit}
-                  onValueChange={(value) => updateForm("preferredSplit", value)}
-                >
-                  <SelectTrigger id="preferredSplit">
-                    <SelectValue placeholder="Choisissez un format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {splitOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div className="space-y-3">
+                    <label
+                      htmlFor="injuries"
+                      className="text-sm font-medium block"
+                    >
+                      Des blessures ou limitations ? (optionnel)
+                    </label>
 
-              <div className="space-y-3">
-                <label htmlFor="injuries" className="text-sm font-medium block">
-                  Des blessures ou limitations ? (optionnel)
-                </label>
+                    <Textarea
+                      id="injuries"
+                      placeholder="Ex. : douleurs lombaires, conflit d’épaule..."
+                      rows={3}
+                      value={formData.injuries}
+                      onChange={(e) => {
+                        updateForm("injuries", e.target.value);
+                      }}
+                    />
+                  </div>
 
-                <Textarea
-                  id="injuries"
-                  placeholder="Ex. : douleurs lombaires, conflit d’épaule..."
-                  rows={3}
-                  value={formData.injuries}
-                  onChange={(e) => {
-                    updateForm("injuries", e.target.value);
-                  }}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <Button type="submit" className="flex-1 gap-2">
-                  Générer mon programme <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </form>
-          </Card>
+                  <div className="flex gap-3 pt-2">
+                    <Button type="submit" className="flex-1 gap-2">
+                      Générer mon programme <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="text-center py-16">
+              <CardHeader>
+                <Loader2 className="w-12 h-12 text-(--color-accent) mx-auto mb-6 animate-spin" />
+                <CardTitle className="text-2xl font-bold mb-2">
+                  Création de votre programme
+                </CardTitle>
+                <CardDescription className="text-var(--color-muted)">
+                  Notre IA crée votre programme d’entraînement personnalisé...
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
         </div>
       </div>
     </SignedIn>
