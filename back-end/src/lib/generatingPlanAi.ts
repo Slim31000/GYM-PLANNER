@@ -1,10 +1,9 @@
 import OpenAI from "openai";
-import dotenv from "dotenv";
 import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 import type { TrainingPlan, UserProfile } from "../types/index";
 
-dotenv.config();
+
 
 // Nettoyage du texte libre utilisateur
 function sanitizeInjuriesInput(input: unknown): string | null {

@@ -303,7 +303,7 @@ const Onboarding = () => {
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <Button type="submit" className="flex-1 gap-2">
+                    <Button type="submit" disabled={isGenerating} className="flex-1 gap-2">
                       Générer mon programme <ArrowRight className="w-4 h-4" />
                     </Button>
                   </div>
