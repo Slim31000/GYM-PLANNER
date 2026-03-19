@@ -5,28 +5,39 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { OnboardingFormData, User } from "../types";
+import type {
+  GeneratedPlanResponse,
+  OnboardingFormData,
+  TrainingPlan,
+  User,
+} from "../types";
 import { authClient } from "../lib/auth";
 import { api } from "../lib/api";
 
-// Ce que le contexte va partager dans l'application
+// Ce que le contexte partage dans toute l'application
 interface AuthContextType {
   user: User | null;
+  plan: TrainingPlan | null;
   isLoading: boolean;
   saveProfile: (profile: OnboardingFormData) => Promise<void>;
+  generatePlan: () => Promise<TrainingPlan>;
 }
 
 // Création du contexte
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Provider principal
+// Provider principal de l'auth
 export default function AuthProvider({ children }: { children: ReactNode }) {
- 
+  // Utilisateur connecté
   const [user, setUser] = useState<User | null>(null);
 
+  // Plan généré
+  const [plan, setPlan] = useState<TrainingPlan | null>(null);
+
+  // État de chargement de la session
   const [isLoading, setIsLoading] = useState(true);
 
-  // Au chargement, on demande à Better Auth s'il existe une session active
+  // Au montage, on récupère la session Better Auth
   useEffect(() => {
     async function loadUser() {
       try {
@@ -48,7 +59,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  // Envoie les données du formulaire d'onboarding au backend
+  // Sauvegarde du profil onboarding
   async function saveProfile(profileData: OnboardingFormData) {
     if (!user) {
       throw new Error("User must be authenticated to save profile");
@@ -57,12 +68,36 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     await api.saveProfile(profileData);
   }
 
+  // Génération du plan d'entraînement
+  async function generatePlan(): Promise<TrainingPlan> {
+    if (!user) {
+      throw new Error("User must be authenticated to generate a plan");
+    }
+
+    const generatedPlan: GeneratedPlanResponse = await api.generatePlan();
+
+    const fullPlan: TrainingPlan = {
+      id: generatedPlan.id,
+      userId: user.id,
+      version: generatedPlan.version,
+      createdAt: generatedPlan.createdAt,
+      ...generatedPlan.planJson,
+    };
+
+    setPlan(fullPlan);
+
+    return fullPlan;
+  }
+
+  // Valeurs rendues disponibles dans toute l'application
   return (
     <AuthContext.Provider
       value={{
         user,
+        plan,
         isLoading,
         saveProfile,
+        generatePlan,
       }}
     >
       {children}

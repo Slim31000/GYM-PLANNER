@@ -1,16 +1,16 @@
 import { Link } from 'react-router-dom'
 import {Dumbbell} from 'lucide-react'
 import { Button } from '../ui/button'
-import { authClient } from '@/lib/auth.ts'
 import {  UserButton } from "@daveyplate/better-auth-ui";
+import { useAuth } from '@/context/AppContext';
 
 
 const Navbar = () => {
     //const isAuthenticated = false; // Replace with actual authentication logic
 
-    const { data: session, isPending } = authClient.useSession()
+    const { user, isLoading } = useAuth();
 
-  if (isPending) return null;
+  if (isLoading) return null;
 
   return (
     <header className='fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-md'>
@@ -22,7 +22,7 @@ const Navbar = () => {
             <span className='font-semibold text-lg'>GYM PLANNER</span>
             </Link>
             <nav className='flex items-center justify-between'>
-                {session?.user ? <><Link 
+                {user ? <><Link 
                 to="/Profile"
                 >
                     <Button variant="ghost" size="sm">My Plan</Button>

@@ -1,4 +1,4 @@
-import type { OnboardingFormData, UserProfile } from "../types";
+import type { OnboardingFormData, UserProfile,TrainingPlan } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -27,5 +27,14 @@ export const api = {
   async saveProfile(profile: OnboardingFormData): Promise<UserProfile> {
     const data = await post("/profile", profile);
     return data.profile;
+  },
+  // Génère un plan d'entraînement
+  async generatePlan(): Promise<{
+    id: string;
+    version: number;
+    createdAt: string;
+    planJson: Omit<TrainingPlan, "id" | "userId" | "version" | "createdAt">;
+  }> {
+    return post("/plan/generate");
   },
 };
