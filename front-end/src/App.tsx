@@ -8,13 +8,14 @@ import Profile from "./pages/Profile";
 import Navbar from "./components/layout/Navbar";
 import { Providers } from "./components/layout/providers";
 import AuthProvider from "./context/AppContext";
+import EmailVerified from "./pages/EmailVerified";
+import PostLoginRedirect from "./pages/PostLoginRedirect";
 
 function App() {
   return (
-    <>
-      <BrowserRouter>
-      <AuthProvider>
-        <Providers>
+    <BrowserRouter>
+      <Providers>
+        <AuthProvider>
           <div className="min-h-screen flex flex-col">
             <main className="flex-1">
               <Navbar />
@@ -24,14 +25,15 @@ function App() {
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/account/:pathname" element={<Account />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/auth/verified" element={<EmailVerified />} />
+                <Route path="/post-login" element={<PostLoginRedirect />} /> 
               </Routes>
               <Toaster richColors />
             </main>
           </div>
-        </Providers>
         </AuthProvider>
-      </BrowserRouter>
-    </>
+      </Providers>
+    </BrowserRouter>
   );
 }
 
