@@ -1,4 +1,4 @@
-import type { OnboardingFormData, UserProfile,TrainingPlan } from "../types";
+import type { OnboardingFormData, UserProfile, GeneratedPlanResponse } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -22,19 +22,38 @@ async function post(path: string, body?: object) {
   return res.json();
 }
 
+async function get(path: string) {
+    const res = await fetch(`${BASE_URL}/api${path}`,{
+        method: "GET",
+        credentials: "include",
+    });
+    if (!res.ok) {
+      throw new Error(
+        (await res.json().catch(() => ({}))).error || "Request failed",
+      );
+    }
+    return res.json();
+}
+
+
 export const api = {
   // Sauvegarde du profil onboarding
   async saveProfile(profile: OnboardingFormData): Promise<UserProfile> {
     const data = await post("/profile", profile);
     return data.profile;
   },
+
+  async getCurrentProfile(): Promise<UserProfile> {
+    const data = await get("/profile/current");
+    return data.profile;
+  },
+
   // Génère un plan d'entraînement
-  async generatePlan(): Promise<{
-    id: string;
-    version: number;
-    createdAt: string;
-    planJson: Omit<TrainingPlan, "id" | "userId" | "version" | "createdAt">;
-  }> {
+  async generatePlan(): Promise<GeneratedPlanResponse> {
     return post("/plan/generate");
+  },
+
+  async getCurrentPlan(): Promise<GeneratedPlanResponse> {
+    return get("/plan/current");
   },
 };

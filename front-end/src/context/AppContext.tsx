@@ -10,65 +10,91 @@ import type {
   OnboardingFormData,
   TrainingPlan,
   User,
+  UserProfile,
 } from "../types";
 import { authClient } from "../lib/auth";
 import { api } from "../lib/api";
 
-// Ce que le contexte partage dans toute l'application
 interface AuthContextType {
   user: User | null;
-  plan: TrainingPlan | null;
+  profile: UserProfile | null | undefined;
+  plan: TrainingPlan | null | undefined;
   isLoading: boolean;
   saveProfile: (profile: OnboardingFormData) => Promise<void>;
   generatePlan: () => Promise<TrainingPlan>;
+  refreshProfile: () => Promise<void>;
+  refreshPlan: () => Promise<void>;
 }
 
-// Création du contexte
-const AuthContext = createContext<AuthContextType | null>(null);
+const AppContext = createContext<AuthContextType | null>(null);
 
-// Provider principal de l'auth
-export default function AuthProvider({ children }: { children: ReactNode }) {
-  // Utilisateur connecté
-  const [user, setUser] = useState<User | null>(null);
+export default function AppProvider({ children }: { children: ReactNode }) {
+  const { data: session, isPending } = authClient.useSession();
 
-  // Plan généré
-  const [plan, setPlan] = useState<TrainingPlan | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null | undefined>(
+    undefined,
+  );
+  const [plan, setPlan] = useState<TrainingPlan | null | undefined>(undefined);
 
-  // État de chargement de la session
-  const [isLoading, setIsLoading] = useState(true);
+  const user = (session?.user as User) ?? null;
+  const isLoading = isPending;
 
-  // Au montage, on récupère la session Better Auth
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const result = await authClient.getSession();
+    if (isLoading) return;
 
-        if (result?.data?.user) {
-          setUser(result.data.user as User);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Error loading session:", error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
+    if (!user) {
+      setProfile(undefined);
+      setPlan(undefined);
+      return;
     }
 
-    loadUser();
-  }, []);
+    setProfile(undefined);
+    setPlan(undefined);
 
-  // Sauvegarde du profil onboarding
+    refreshProfile();
+    refreshPlan();
+  }, [user?.id, isLoading]);
+
+  async function refreshProfile() {
+    if (!user) return;
+
+    try {
+      const currentProfile = await api.getCurrentProfile();
+      setProfile(currentProfile);
+    } catch {
+      setProfile(null);
+    }
+  }
+
+  async function refreshPlan() {
+    if (!user) return;
+
+    try {
+      const currentPlan = await api.getCurrentPlan();
+
+      const fullPlan: TrainingPlan = {
+        id: currentPlan.id,
+        userId: currentPlan.userId,
+        version: currentPlan.version,
+        createdAt: currentPlan.createdAt,
+        ...currentPlan.planJson,
+      };
+
+      setPlan(fullPlan);
+    } catch {
+      setPlan(null);
+    }
+  }
+
   async function saveProfile(profileData: OnboardingFormData) {
     if (!user) {
       throw new Error("User must be authenticated to save profile");
     }
 
-    await api.saveProfile(profileData);
+    const savedProfile = await api.saveProfile(profileData);
+    setProfile(savedProfile);
   }
 
-  // Génération du plan d'entraînement
   async function generatePlan(): Promise<TrainingPlan> {
     if (!user) {
       throw new Error("User must be authenticated to generate a plan");
@@ -89,28 +115,29 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     return fullPlan;
   }
 
-  // Valeurs rendues disponibles dans toute l'application
   return (
-    <AuthContext.Provider
+    <AppContext.Provider
       value={{
         user,
+        profile,
         plan,
         isLoading,
         saveProfile,
         generatePlan,
+        refreshProfile,
+        refreshPlan,
       }}
     >
       {children}
-    </AuthContext.Provider>
+    </AppContext.Provider>
   );
 }
 
-// Hook pratique pour utiliser le contexte
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = useContext(AppContext);
 
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("useAuth must be used within an AppProvider");
   }
 
   return context;

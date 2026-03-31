@@ -4,6 +4,7 @@ import { auth } from "../lib/auth";
 import db from "../db";
 import { userProfiles } from "../db/schema";
 import { success } from "better-auth";
+import { eq } from "drizzle-orm";
 
 export const profileRouter = Router();
 
@@ -61,5 +62,37 @@ profileRouter.post("/", async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ error: "An error occurred while saving the profile" });
+  }
+});
+
+profileRouter.get("/current", async (req: Request, res: Response) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+
+    if (!session) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const userId = session.user.id;
+
+    const [profile] = await db
+      .select()
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, userId))
+      .limit(1);
+
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      profile,
+    });
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    return res.status(500).json({ error: "Failed to fetch profile" });
   }
 });

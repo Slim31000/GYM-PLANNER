@@ -54,6 +54,7 @@ export interface TrainingPlan {
 
 export interface GeneratedPlanResponse {
   id: string;
+  userId: string;
   version: number;
   createdAt: string;
   planJson: Omit<TrainingPlan, "id" | "userId" | "version" | "createdAt">;
