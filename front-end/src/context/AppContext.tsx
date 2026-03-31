@@ -43,8 +43,8 @@ export default function AppProvider({ children }: { children: ReactNode }) {
     if (isLoading) return;
 
     if (!user) {
-      setProfile(undefined);
-      setPlan(undefined);
+      setProfile(null);
+      setPlan(null);
       return;
     }
 

@@ -1,17 +1,36 @@
 import { AuthUIProvider } from "@daveyplate/better-auth-ui";
 import { authClient } from "@/lib/auth";
 import { useNavigate, Link as ReactRouterLink } from "react-router-dom";
-import type { ReactNode } from "react";
+import type {
+  ReactNode,
+  AnchorHTMLAttributes,
+  MouseEventHandler,
+} from "react";
 
 type RouterLinkProps = {
   href: string;
   className?: string;
   children: ReactNode;
-};
+} & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "children">;
 
-function RouterLink({ href, className, children }: RouterLinkProps) {
+function RouterLink({
+  href,
+  className,
+  children,
+  onClick,
+  target,
+  rel,
+  ...rest
+}: RouterLinkProps) {
   return (
-    <ReactRouterLink to={href} className={className}>
+    <ReactRouterLink
+      to={href}
+      className={className}
+      onClick={onClick as MouseEventHandler<HTMLAnchorElement>}
+      target={target}
+      rel={rel}
+      {...rest}
+    >
       {children}
     </ReactRouterLink>
   );
