@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "sonner";
 import Account from "./pages/Account";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
@@ -24,6 +25,7 @@ function App() {
                 <Route path="/account/:pathname" element={<Account />} />
                 <Route path="/profile" element={<Profile />} />
               </Routes>
+              <Toaster richColors />
             </main>
           </div>
         </Providers>
