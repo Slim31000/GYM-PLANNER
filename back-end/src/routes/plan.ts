@@ -92,3 +92,39 @@ planRouter.post("/generate", async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to generate plan" });
   }
 });
+
+planRouter.get("/current", async (req: Request, res: Response) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+
+    if (!session) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const userId = session.user.id;
+
+    const [currentPlan] = await db
+      .select()
+      .from(trainingPlans)
+      .where(eq(trainingPlans.userId, userId))
+      .orderBy(desc(trainingPlans.createdAt))
+      .limit(1);
+
+    if (!currentPlan) {
+      return res.status(404).json({ error: "No training plan found" });
+    }
+
+    return res.status(200).json({
+      id: currentPlan.id,
+      userId: currentPlan.userId,
+      version: currentPlan.version,
+      createdAt: currentPlan.createdAt,
+      planJson: currentPlan.planJson,
+    });
+  } catch (error) {
+    console.error("Error fetching current plan:", error);
+    return res.status(500).json({ error: "Failed to fetch current plan" });
+  }
+});
